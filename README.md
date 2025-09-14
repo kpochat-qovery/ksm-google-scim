@@ -1,13 +1,13 @@
-# Keeper Secret Manager Google SCIM Push
+![Keeper Secret Manager Google SCIM Push Header](https://github.com/user-attachments/assets/856e2170-d1ce-4262-a425-869e10fd04fc)
 
-This repository contains the source code that synchronizes Google Workspace Users/Groups and Keeper Enterprise Users/Teams.
+# Keeper Secrets Manager : Google SCIM Push
 
-This code duplicates the `keeper scim push --source=google` Commander's command and shares configuration settings with this command.
+This repository contains the source code that synchronizes Google Workspace Users/Groups and Keeper Enterprise Users/Teams. This is necessary because Google Workspace does not adequately support Team SCIM provisioning.
 
-To setup SCIM configuration please reference this Commander's page
-[Google Workspace Integration](https://docs.keeper.io/secrets-manager/commander-cli/command-reference/enterprise-management-commands/scim-push-configuration#google-workspace)
+## Step by Step Instructions
+Read this document: [Google Workspace User and Group Provisioning with Cloud Function](https://docs.keeper.io/en/sso-connect-cloud/identity-provider-setup/g-suite-keeper/google-workspace-user-and-group-provisioning-with-cloud-function)
 
-Once the `scim push` command completes successfully the SCIM sync process can be transfered to the Google Cloud
+> This project replicates the `keeper scim push --source=google` [Commander CLI command](https://docs.keeper.io/en/keeperpam/commander-cli/command-reference/enterprise-management-commands/scim-push-configuration) and shares configuration settings with this command.
 
 ### Prerequisites
 * Keeper Secret Manager enterprise subscription
