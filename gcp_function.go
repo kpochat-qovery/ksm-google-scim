@@ -26,67 +26,80 @@ const ksmConfigName = "KSM_CONFIG_BASE64"
 const ksmRecordUid = "KSM_RECORD_UID"
 
 func runScimSync() (syncStat *scim.SyncStat, err error) {
-	var configBase64 = os.Getenv(ksmConfigName)
-	if len(configBase64) == 0 {
-		err = errors.New(fmt.Sprintf("Environment variable \"%s\" is not set", ksmConfigName))
-		log.Println(err)
-		return
-	}
-
-	var config = ksm.NewMemoryKeyValueStorage(configBase64)
-	var sm = ksm.NewSecretsManager(&ksm.ClientOptions{
-		Config: config,
-	})
-
-	var filter []string
-	var recordUid = os.Getenv(ksmRecordUid)
-	if len(recordUid) > 0 {
-		filter = append(filter, recordUid)
-	}
-
-	var records []*ksm.Record
-	if records, err = sm.GetSecrets(filter); err != nil {
-		log.Println(err)
-		return
-	}
-
-	var scimRecord *ksm.Record
-	for _, r := range records {
-		if r.Type() != "login" {
-			continue
-		}
-		var webUrl = r.GetFieldValueByType("url")
-		if len(webUrl) == 0 {
-			continue
-		}
-		var uri *url.URL
-		var er1 error
-		if uri, er1 = url.Parse(webUrl); er1 != nil {
-			continue
-		}
-		if !strings.HasPrefix(uri.Path, "/api/rest/scim/v2/") {
-			continue
-		}
-
-		var files = r.FindFiles("credentials.json")
-		if len(files) == 0 {
-			continue
-		}
-		scimRecord = r
-		break
-	}
-	if scimRecord == nil {
-		err = errors.New("SCIM record was not found. Make sure the record is valid and shared to KSM application")
-		log.Println(err)
-		return
-	}
-
 	var ka *scim.ScimEndpointParameters
 	var gcp *scim.GoogleEndpointParameters
-	if ka, gcp, err = scim.LoadScimParametersFromRecord(scimRecord); err != nil {
-		log.Println(err)
-		return
+
+	// Check if environment variable configuration is available
+	if scim.IsEnvConfigAvailable() {
+		log.Println("Loading configuration from environment variables")
+		if ka, gcp, err = scim.LoadScimParametersFromEnv(); err != nil {
+			log.Println(err)
+			return
+		}
+	} else {
+		// Fall back to KSM configuration
+		log.Println("Loading configuration from Keeper Secrets Manager")
+		var configBase64 = os.Getenv(ksmConfigName)
+		if len(configBase64) == 0 {
+			err = errors.New(fmt.Sprintf("Environment variable \"%s\" is not set", ksmConfigName))
+			log.Println(err)
+			return
+		}
+
+		var config = ksm.NewMemoryKeyValueStorage(configBase64)
+		var sm = ksm.NewSecretsManager(&ksm.ClientOptions{
+			Config: config,
+		})
+
+		var filter []string
+		var recordUid = os.Getenv(ksmRecordUid)
+		if len(recordUid) > 0 {
+			filter = append(filter, recordUid)
+		}
+
+		var records []*ksm.Record
+		if records, err = sm.GetSecrets(filter); err != nil {
+			log.Println(err)
+			return
+		}
+
+		var scimRecord *ksm.Record
+		for _, r := range records {
+			if r.Type() != "login" {
+				continue
+			}
+			var webUrl = r.GetFieldValueByType("url")
+			if len(webUrl) == 0 {
+				continue
+			}
+			var uri *url.URL
+			var er1 error
+			if uri, er1 = url.Parse(webUrl); er1 != nil {
+				continue
+			}
+			if !strings.HasPrefix(uri.Path, "/api/rest/scim/v2/") {
+				continue
+			}
+
+			var files = r.FindFiles("credentials.json")
+			if len(files) == 0 {
+				continue
+			}
+			scimRecord = r
+			break
+		}
+		if scimRecord == nil {
+			err = errors.New("SCIM record was not found. Make sure the record is valid and shared to KSM application")
+			log.Println(err)
+			return
+		}
+
+		if ka, gcp, err = scim.LoadScimParametersFromRecord(scimRecord); err != nil {
+			log.Println(err)
+			return
+		}
 	}
+
 	var googleEndpoint = scim.NewGoogleEndpoint(gcp.Credentials, gcp.AdminAccount, gcp.ScimGroups)
 	var sync = scim.NewScimSync(googleEndpoint, ka.Url, ka.Token)
 	sync.SetVerbose(ka.Verbose)
