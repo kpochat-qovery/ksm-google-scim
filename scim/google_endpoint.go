@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/mail"
+	"strings"
+
 	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
 	"google.golang.org/api/option"
-	"net/mail"
-	"strings"
 )
 
 type googleEndpoint struct {
@@ -80,6 +81,35 @@ func parseGoogleUser(gu *admin.User) (su *User) {
 		}
 	}
 	return
+}
+
+// TestConnection verifies that the credentials and subject are valid by making a minimal API call
+func (ge *googleEndpoint) TestConnection() (err error) {
+	params := google.CredentialsParams{
+		Scopes: []string{admin.AdminDirectoryUserReadonlyScope,
+			admin.AdminDirectoryGroupReadonlyScope, admin.AdminDirectoryGroupMemberReadonlyScope},
+		Subject: ge.subject,
+	}
+	var ctx = context.Background()
+	cred, _ := google.CredentialsFromJSONWithParams(ctx, ge.jwtCredentials, params)
+
+	directory, err := admin.NewService(ctx, option.WithCredentials(cred))
+	if err != nil {
+		err = fmt.Errorf("failed to create Google Directory service: %w", err)
+		ge.DebugLogger()(err.Error())
+		return
+	}
+
+	// Make a minimal API call to verify credentials work
+	_, err = directory.Users.List().Customer("my_customer").MaxResults(1).Do()
+	if err != nil {
+		err = fmt.Errorf("failed to connect to Google Workspace API: %w", err)
+		ge.DebugLogger()(err.Error())
+		return
+	}
+
+	ge.DebugLogger()("Successful connection to Google Endpoint")
+	return nil
 }
 
 func (ge *googleEndpoint) Populate() (err error) {

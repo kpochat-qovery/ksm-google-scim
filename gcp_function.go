@@ -4,16 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
-	"github.com/cloudevents/sdk-go/v2/event"
-	ksm "github.com/keeper-security/secrets-manager-go/core"
 	"io"
-	"keepersecurity.com/ksm-scim/scim"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/GoogleCloudPlatform/functions-framework-go/functions"
+	"github.com/cloudevents/sdk-go/v2/event"
+	ksm "github.com/keeper-security/secrets-manager-go/core"
+	"keepersecurity.com/ksm-scim/scim"
 )
 
 func init() {
@@ -41,7 +42,7 @@ func runScimSync() (syncStat *scim.SyncStat, err error) {
 		log.Println("Loading configuration from Keeper Secrets Manager")
 		var configBase64 = os.Getenv(ksmConfigName)
 		if len(configBase64) == 0 {
-			err = errors.New(fmt.Sprintf("Environment variable \"%s\" is not set", ksmConfigName))
+			err = fmt.Errorf("Environment variable \"%s\" is not set", ksmConfigName)
 			log.Println(err)
 			return
 		}
@@ -104,6 +105,10 @@ func runScimSync() (syncStat *scim.SyncStat, err error) {
 	var sync = scim.NewScimSync(googleEndpoint, ka.Url, ka.Token)
 	sync.SetVerbose(ka.Verbose)
 	sync.SetDestructive(ka.Destructive)
+
+	if ka.Verbose {
+		googleEndpoint.TestConnection()
+	}
 
 	if syncStat, err = sync.Sync(); err == nil {
 		printStatistics(os.Stdout, syncStat)

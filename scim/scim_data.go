@@ -7,6 +7,7 @@ var NilLogger SyncDebugLogger = func(string) {}
 type ICrmDataSource interface {
 	Users(func(*User))
 	Groups(func(*Group))
+	TestConnection() error
 	Populate() error
 	DebugLogger() SyncDebugLogger
 	SetDebugLogger(SyncDebugLogger)

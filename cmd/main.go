@@ -3,13 +3,14 @@ package main
 import (
 	"errors"
 	"fmt"
-	ksm "github.com/keeper-security/secrets-manager-go/core"
-	"keepersecurity.com/ksm-scim/scim"
 	"log"
 	"net/url"
 	"os"
 	"path"
 	"strings"
+
+	ksm "github.com/keeper-security/secrets-manager-go/core"
+	"keepersecurity.com/ksm-scim/scim"
 )
 
 func main() {
@@ -90,6 +91,10 @@ func main() {
 	var sync = scim.NewScimSync(googleEndpoint, ka.Url, ka.Token)
 	sync.SetVerbose(ka.Verbose)
 	sync.SetDestructive(ka.Destructive)
+
+	if ka.Verbose {
+		googleEndpoint.TestConnection()
+	}
 
 	var syncStat *scim.SyncStat
 	if syncStat, err = sync.Sync(); err != nil {
