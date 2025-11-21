@@ -3,8 +3,9 @@ package scim
 import (
 	"errors"
 	"fmt"
-	"golang.org/x/text/cases"
 	"log"
+
+	"golang.org/x/text/cases"
 )
 
 // NewScimSync creates IScimSync interface for syncing with external CRMs
@@ -28,6 +29,7 @@ type sync struct {
 	baseUrl     string
 	token       string
 	verbose     bool
+	updateUsers bool
 	destructive int32
 }
 
@@ -41,6 +43,8 @@ func (s *sync) Source() ICrmDataSource {
 }
 func (s *sync) Verbose() bool              { return s.verbose }
 func (s *sync) SetVerbose(value bool)      { s.verbose = value }
+func (s *sync) UpdateUsers() bool          { return s.updateUsers }
+func (s *sync) SetUpdateUsers(value bool)  { s.updateUsers = value }
 func (s *sync) Destructive() int32         { return s.destructive }
 func (s *sync) SetDestructive(value int32) { s.destructive = value }
 
@@ -60,9 +64,11 @@ func (s *sync) Sync() (stat *SyncStat, err error) {
 	if syncStat.SuccessGroups, syncStat.FailedGroups, err = s.syncGroups(); err != nil {
 		return
 	}
-	s.debugLogger("Synchronize users")
-	if syncStat.SuccessUsers, syncStat.FailedUsers, err = s.syncUsers(); err != nil {
-		return
+	if s.updateUsers {
+		s.debugLogger("Synchronize users")
+		if syncStat.SuccessUsers, syncStat.FailedUsers, err = s.syncUsers(); err != nil {
+			return
+		}
 	}
 	s.debugLogger("Synchronize membership")
 	if syncStat.SuccessMembership, syncStat.FailedMembership, err = s.syncMembership(); err != nil {

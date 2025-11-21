@@ -90,6 +90,7 @@ func main() {
 
 	var sync = scim.NewScimSync(googleEndpoint, ka.Url, ka.Token)
 	sync.SetVerbose(ka.Verbose)
+	sync.SetUpdateUsers(ka.UpdateUsers)
 	sync.SetDestructive(ka.Destructive)
 
 	if ka.Verbose {

@@ -21,6 +21,7 @@ import (
 // Optional environment variables:
 //   - SCIM_VERBOSE: Enable verbose logging (true/false/1/0)
 //   - SCIM_DESTRUCTIVE: Deletion behavior (-1=safe mode, 0=partial, >0=full)
+//   - SCIM_UPDATE_USERS: Enable Users creation/update in Keeper (true/false/1/0), default true.
 func LoadScimParametersFromEnv() (ka *ScimEndpointParameters, gcp *GoogleEndpointParameters, err error) {
 	// Load Google credentials
 	var credentials []byte
@@ -104,6 +105,15 @@ func LoadScimParametersFromEnv() (ka *ScimEndpointParameters, gcp *GoogleEndpoin
 			ka.Destructive = int32(iv)
 		} else {
 			ka.Destructive = -1
+		}
+	}
+
+	// Load optional "update users" flag
+	if updateUsersStr := os.Getenv("SCIM_UPDATE_USERS"); len(updateUsersStr) > 0 {
+		if bv, ok := toBoolean(updateUsersStr); ok {
+			ka.UpdateUsers = bv
+		} else {
+			ka.UpdateUsers = true
 		}
 	}
 

@@ -104,6 +104,7 @@ func runScimSync() (syncStat *scim.SyncStat, err error) {
 	var googleEndpoint = scim.NewGoogleEndpoint(gcp.Credentials, gcp.AdminAccount, gcp.ScimGroups)
 	var sync = scim.NewScimSync(googleEndpoint, ka.Url, ka.Token)
 	sync.SetVerbose(ka.Verbose)
+	sync.SetUpdateUsers(ka.UpdateUsers)
 	sync.SetDestructive(ka.Destructive)
 
 	if ka.Verbose {

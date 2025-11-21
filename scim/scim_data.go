@@ -27,6 +27,8 @@ type IScimSync interface {
 	Sync() (*SyncStat, error)
 	Verbose() bool
 	SetVerbose(bool)
+	UpdateUsers() bool
+	SetUpdateUsers(bool)
 	Destructive() int32
 	SetDestructive(int32)
 }
@@ -50,6 +52,7 @@ type ScimEndpointParameters struct {
 	Url         string
 	Token       string
 	Verbose     bool
+	UpdateUsers bool
 	Destructive int32
 }
 
